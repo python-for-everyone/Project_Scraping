@@ -1,0 +1,127 @@
+import urllib.request
+from bs4 import BeautifulSoup
+import string
+
+# Unix Datum holen
+
+import time
+
+Unix_Zeit = []
+
+current_time = round(time.time() * 1)
+one_month_in_seconds = 2592000
+
+for i in range (12):
+    time = current_time - (one_month_in_seconds*i)
+    Unix_Zeit.append(time)
+
+
+# Erstellen vom Excel Blatt mit Spaltennamen "Kryptowährungen Namen"
+
+from openpyxl import Workbook
+workbook = Workbook()
+sheet = workbook.active
+
+sheet["A2"] = "Kryptowährungen Namen"
+sheet["B2"] = "-1 Monat"
+sheet["C2"] = "-2 Monat"
+sheet["D2"] = "-3 Monat"
+sheet["E2"] = "-4 Monat"
+sheet["F2"] = "-5 Monat"
+sheet["G2"] = "-6 Monat"
+sheet["H2"] = "-7 Monat"
+sheet["I2"] = "-8 Monat"
+sheet["J2"] = "-9 Monat"
+sheet["K2"] = "-10 Monat"
+sheet["L2"] = "-11 Monat"
+sheet["M2"] = "-12 Monat"
+
+
+# Kryptowährungen Namen in Excel speichern
+
+url_yahoo_finance = "https://finance.yahoo.com/u/yahoo-finance/watchlists/crypto-top-market-cap/"
+
+headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"}
+
+request_yahoo_finance = urllib.request.Request(url=url_yahoo_finance,headers=headers)
+
+
+with urllib.request.urlopen(request_yahoo_finance) as response:
+    page_html = response.read()
+
+soup = BeautifulSoup(page_html, 'html.parser')
+
+crypto_currency_names = [x.get_text() for x in soup.find_all('td', class_="data-col0 Ta(start) Pstart(6px) Pend(6px)")]
+
+
+length = len(crypto_currency_names)
+row_crypto = 3
+length_list = 0
+
+for i in crypto_currency_names:
+    if length_list < length:
+        sheet["A"+str(row_crypto)] = str(i)
+        row_crypto = row_crypto + 1
+        length_list = length_list + 1
+
+# Kurswert vor einem Monat - die Links werden in eine Liste gespeichert mit den jeweiligen Kryptowährungen
+
+
+url_kurswerte_links = []
+
+def kurswerte(i):
+    for x in crypto_currency_names:
+        url_kurswerte = "https://finance.yahoo.com/quote/"+str(x)+"/history?period1="+str(i)+"&period2="+str(i)+"&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true"
+        url_kurswerte_links.append(url_kurswerte)
+
+for i in Unix_Zeit:
+    kurswerte(i)
+
+for l in crypto_currency_names:
+    print(l)
+
+# Links aus der Liste verwenden, um die Werte zu extrahieren
+
+def kurswerte():
+
+
+        try:
+                    for i in url_kurswerte_links:
+
+
+                        global row_count, letter_from_lis
+
+                        print(letter_from_lis,row_count)
+                        print(i)
+
+                        request_yahoo_finance_1m = urllib.request.Request(url=i,headers=headers)
+
+                        with urllib.request.urlopen(request_yahoo_finance_1m) as response:
+                            page_html_1m = response.read()
+
+                        soup_1m = BeautifulSoup(page_html_1m, 'html.parser')
+
+                        crypto_kurswerte_1m = [x.get_text() for x in soup_1m.find_all('td', class_="Py(10px) Pstart(10px)")]
+
+                        sheet[str(letters[letter_from_lis])+str(row_count)] = str(crypto_kurswerte_1m[0])
+
+                        if row_count == rows_total:
+                            row_count = 3
+                            letter_from_lis = letter_from_lis + 1
+                        else:
+                            row_count = row_count + 1
+
+                        workbook.save(filename="investment_dashboard_final_trial.xlsx")
+
+        except IndexError:
+            pass
+
+
+row_begin = 2
+rows_total = row_begin + len(crypto_currency_names)
+row_count = 3
+letters = list(string.ascii_uppercase[1:13])
+letter_from_lis = 0
+
+while letter_from_lis < 12:
+    kurswerte()
